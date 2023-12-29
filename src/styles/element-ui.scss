@@ -1,0 +1,117 @@
+//to reset element-ui default css
+.el-upload {
+  input[type='file'] {
+    display: none !important;
+  }
+}
+
+.el-upload__input {
+  display: none;
+}
+
+//暂时性解决diolag 问题 https://github.com/ElemeFE/element/issues/2461
+.el-dialog {
+  transform: none;
+  left: 0;
+  position: relative;
+  margin: 0 auto;
+}
+
+//element ui upload
+.upload-container {
+  .el-upload {
+    width: 100%;
+    .el-upload-dragger {
+      width: 100%;
+      height: 200px;
+    }
+  }
+}
+
+/* 表格兼容safafi错位 */
+.el-table__body,
+.el-table__header,
+.el-table__footer {
+  width: 100%;
+  table-layout: fixed !important;
+}
+.el-table .el-table__body td .cell:empty::after,
+.el-table .el-table__body td .cell .approval:empty::after,
+.el-table .el-table__body td .cell div:empty::after,
+.el-table .el-table__body td .cell .line-limit-length:empty::after {
+  content: '--';
+  letter-spacing: 1px;
+}
+
+.el-table__inden::after {
+  display: none !important;
+}
+.el-table__body-wrapper {
+  position: relative;
+}
+.el-table__body-wrapper::-webkit-scrollbar {
+  width: 2px;
+  height: 10px;
+}
+.el-table__body-wrapper::-webkit-scrollbar-thumb {
+  border-radius: 2px;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+.el-table__body-wrapper::-webkit-scrollbar-track {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+//宽度问题解决，关键部分
+.el-table colgroup col[name='gutter'] {
+  width: 2px;
+  height: 10px;
+}
+.el-table__fixed-right {
+  height: 100% !important;
+}
+.el-table__body {
+  width: 100% !important;
+}
+.el-table .caret-wrapper {
+  width: 14px;
+}
+.el-table .sort-caret {
+  left: 50%;
+  margin-left: -5px;
+}
+
+.filter-container {
+  .filter-title {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .el-input {
+    width: 200px;
+  }
+  .el-select {
+    width: 200px;
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  .el-input,.el-input-number{
+    width: 100%;
+  }
+}
+
+.el-dialog {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin-top: 0 !important;
+  margin: 0;
+  .app-container{
+    box-shadow: none;
+    border: 0;
+    padding: 0;
+  }
+}

@@ -628,6 +628,45 @@ export const asyncRouterMap = [{
   ]
 },
 {
+  path: '/media',
+  component: Layout,
+  redirect: '/media/stream',
+  name: 'media',
+  meta: {
+    title: '视频流管理',
+    icon: 'ums'
+  },
+  children: [
+    {
+      path: 'stream',
+      name: 'stream',
+      component: () => import('@/views/media/stream/index'),
+      meta: {
+        title: '在线视频流',
+        icon: 'algorithm-behavior'
+      }
+    },
+    {
+      path: 'camera',
+      name: 'camera',
+      component: () => import('@/views/media/camera/index'),
+      meta: {
+        title: '摄像头管理',
+        icon: 'algorithm-basic'
+      }
+    },
+    // {
+    //   path: 'player',
+    //   name: 'player',
+    //   component: () => import('@/views/media/player/index'),
+    //   meta: {
+    //     title: '播放器',
+    //     icon: 'algorithm-basic'
+    //   }
+    // },
+  ]
+},
+{
   path: '*',
   redirect: '/404',
   hidden: true

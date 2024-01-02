@@ -12,19 +12,19 @@
           <template slot-scope="scope">{{ scope.row.id }}</template>
         </el-table-column>
         <el-table-column label="算法编号" align="center">
-          <template slot-scope="scope">{{ scope.row.username }}</template>
+          <template slot-scope="scope">{{ scope.row.code }}</template>
         </el-table-column>
         <el-table-column label="算法名称" align="center">
-          <template slot-scope="scope">{{ scope.row.nickName }}</template>
+          <template slot-scope="scope">{{ scope.row.name }}</template>
         </el-table-column>
         <el-table-column label="接入方式" align="center">
-          <template slot-scope="scope">{{ scope.row.email }}</template>
+            <template slot-scope="scope">{{ scope.row.useType }}</template>
         </el-table-column>
         <el-table-column label="接入参数" width="160" align="center">
-          <template slot-scope="scope">{{ scope.row.createTime | formatDateTime }}</template>
+          <template slot-scope="scope">{{ scope.row.params }}</template>
         </el-table-column>
         <el-table-column label="更新时间" width="160" align="center">
-          <template slot-scope="scope">{{ scope.row.loginTime | formatDateTime }}</template>
+          <template slot-scope="scope">{{ scope.row.updateTime | formatDateTime }}</template>
         </el-table-column>
         <el-table-column label="操作" width="150" align="center">
           <template slot-scope="scope">
@@ -46,22 +46,22 @@
     <el-dialog :title="isEdit ? '编辑算法' : '添加算法'" :visible.sync="dialogVisible" width="40%">
       <el-form :model="algorithm" ref="adminForm" label-width="150px" size="small">
         <el-form-item label="算法编号:">
-          <el-input v-model="algorithm.username" style="width: 250px" clearable></el-input>
+          <el-input v-model="algorithm.code" style="width: 250px" clearable></el-input>
         </el-form-item>
         <el-form-item label="算法名称:">
-          <el-input v-model="algorithm.nickName" style="width: 250px" clearable></el-input>
+          <el-input v-model="algorithm.name" style="width: 250px" clearable></el-input>
         </el-form-item>
         <el-form-item label="请选择接入方式:">
-          <el-select v-model="algorithm.type" placeholder="请选择">
+          <el-select v-model="algorithm.useType" placeholder="请选择">
             <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
             </el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="接入参数:">
-          <el-input v-model="algorithm.password" style="width: 250px" clearable></el-input>
+          <el-input v-model="algorithm.params" style="width: 250px" clearable></el-input>
         </el-form-item>
         <el-form-item label="备注:">
-          <el-input v-model="algorithm.note" type="textarea" :rows="5" style="width: 250px" clearable></el-input>
+          <el-input v-model="algorithm.description" type="textarea" :rows="5" style="width: 250px" clearable></el-input>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
@@ -74,10 +74,10 @@
 <script>
 import {
   fetchList,
-  createAdmin,
-  updateAdmin,
-  deleteAdmin,
-} from '@/api/login';
+  create,
+  updateBehavior,
+  deleteBehavior,
+} from '@/api/behavior';
 import {
   formatDate
 } from '@/utils/date';
@@ -89,11 +89,11 @@ const defaultListQuery = {
 };
 const defaultAdmin = {
   id: null,
-  username: null,
+  code: null,
   password: null,
-  nickName: null,
-  email: null,
-  note: null,
+  name: null,
+  useType: null,
+  description: null,
   status: 1
 };
 export default {
@@ -109,12 +109,16 @@ export default {
       isEdit: false,
       allocDialogVisible: false,
       options: [{
-          value: 'API',
-          label: 'API'
-        }, {
-          value: 'SYSTEM',
-          label: 'SYSTEM'
-        }],
+        value: 'API',
+        label: 'API'
+      }, {
+        value: 'SYSTEM',
+        label: 'SYSTEM'
+      },
+      {
+        value: 'LIBRARY',
+        label: 'LIBRARY'
+      }],
     }
   },
   created() {
@@ -154,7 +158,7 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        deleteAdmin(row.id).then(response => {
+        deleteBehavior(row.id).then(response => {
           this.$message({
             type: 'success',
             message: '删除成功!'
@@ -175,7 +179,7 @@ export default {
         type: 'warning'
       }).then(() => {
         if (this.isEdit) {
-          updateAdmin(this.algorithm.id, this.algorithm).then(response => {
+          updateBehavior(this.algorithm.id, this.algorithm).then(response => {
             this.$message({
               message: '修改成功！',
               type: 'success'
@@ -184,7 +188,7 @@ export default {
             this.getList();
           })
         } else {
-          createAdmin(this.algorithm).then(response => {
+          create(this.algorithm).then(response => {
             this.$message({
               message: '添加成功！',
               type: 'success'

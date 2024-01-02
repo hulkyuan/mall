@@ -3,6 +3,7 @@
     <el-card class="operate-container" shadow="never">
       <i class="el-icon-tickets"></i>
       <span>音频管理</span>
+      <audio ref="myAudio" autoplay controls :src="source"></audio>
       <el-button size="mini" type="primary" class="btn-add" @click="getList()" style="margin-left: 20px">刷新</el-button>
       <el-button size="mini" type="primary" class="btn-add" @click="handleAdd()" style="margin-left: 20px">添加</el-button>
     </el-card>
@@ -12,16 +13,19 @@
           <template slot-scope="scope">{{ scope.row.id }}</template>
         </el-table-column>
         <el-table-column label="音频编号" align="center">
-          <template slot-scope="scope">{{ scope.row.username }}</template>
+          <template slot-scope="scope">{{ scope.row.code }}</template>
         </el-table-column>
         <el-table-column label="音频名称" align="center">
-          <template slot-scope="scope">{{ scope.row.nickName }}</template>
+          <template slot-scope="scope">{{ scope.row.name }}</template>
         </el-table-column>
         <el-table-column label="更新时间" width="160" align="center">
-          <template slot-scope="scope">{{ scope.row.loginTime | formatDateTime }}</template>
+          <template slot-scope="scope">{{ scope.row.updateTime | formatDateTime }}</template>
         </el-table-column>
         <el-table-column label="操作" width="150" align="center">
           <template slot-scope="scope">
+            <el-button size="mini" type="text" @click="handleStopAndPlay(scope.$index, scope.row)">
+              播放
+            </el-button>
             <el-button size="mini" type="text" @click="handleUpdate(scope.$index, scope.row)">
               编辑
             </el-button>
@@ -40,19 +44,20 @@
     <el-dialog :title="isEdit ? '编辑音频' : '添加音频'" :visible.sync="dialogVisible" width="40%">
       <el-form :model="algorithm" ref="adminForm" label-width="150px" size="small">
         <el-form-item label="音频编号:">
-          <el-input v-model="algorithm.username" style="width: 250px" clearable></el-input>
+          <el-input v-model="algorithm.code" style="width: 250px" clearable></el-input>
         </el-form-item>
         <el-form-item label="音频名称:">
-          <el-input v-model="algorithm.nickName" style="width: 250px" clearable></el-input>
+          <el-input v-model="algorithm.name" style="width: 250px" clearable></el-input>
         </el-form-item>
-        <el-form-item label="音频名称:">
-          <single-upload v-model="algorithm.pic" type="1" style="width: 300px;display: inline-block;margin-left: 10px"></single-upload>
+        <el-form-item label="音频文件:">
+          <media-upload @mediaChange="onMediaChange" v-model="algorithm.fileList"
+            style="width: 300px;display: inline-block;margin-left: 10px"></media-upload>
         </el-form-item>
         <el-form-item label="文件路径:">
-          <el-input v-model="algorithm.password" style="width: 250px" clearable></el-input>
+          <el-input :disabled="true" v-model="algorithm.urls" style="width: 250px" clearable></el-input>
         </el-form-item>
         <el-form-item label="备注:">
-          <el-input v-model="algorithm.note" type="textarea" :rows="5" style="width: 250px" clearable></el-input>
+          <el-input v-model="algorithm.description" type="textarea" :rows="5" style="width: 250px" clearable></el-input>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
@@ -65,14 +70,14 @@
 <script>
 import {
   fetchList,
-  createAdmin,
-  updateAdmin,
-  deleteAdmin,
-} from '@/api/login';
+  create,
+  updateAction,
+  deleteAction,
+} from '@/api/audio';
 import {
   formatDate
 } from '@/utils/date';
-import SingleUpload from '@/components/Upload/singleUpload'
+import MediaUpload from '@/components/Upload/mediaUpload'
 const defaultListQuery = {
   pageNum: 1,
   pageSize: 10,
@@ -80,20 +85,21 @@ const defaultListQuery = {
 };
 const defaultAdmin = {
   id: null,
-  username: null,
-  password: null,
-  nickName: null,
-  email: null,
-  note: null,
-  status: 1
+  code: null,
+  createTime: null,
+  description: null,
+  name: null,
+  updateTime: null,
+  urls: null
 };
 export default {
   name: 'adminList',
   components: {
-      SingleUpload,
-    },
+    MediaUpload,
+  },
   data() {
     return {
+      myAudio:null,
       listQuery: Object.assign({}, defaultListQuery),
       list: null,
       total: null,
@@ -102,6 +108,8 @@ export default {
       algorithm: Object.assign({}, defaultAdmin),
       isEdit: false,
       allocDialogVisible: false,
+      source:null,
+      host:'http://111.229.115.233:8086'
     }
   },
   created() {
@@ -117,6 +125,12 @@ export default {
     }
   },
   methods: {
+    onMediaChange(file) {
+     
+      this.algorithm.urls = file.url;
+     
+      // this.algorithm.name = file.name;
+    },
     handleSearchList() {
       this.listQuery.pageNum = 1;
       this.getList();
@@ -141,7 +155,7 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        deleteAdmin(row.id).then(response => {
+        deleteAction(row.id).then(response => {
           this.$message({
             type: 'success',
             message: '删除成功!'
@@ -149,6 +163,10 @@ export default {
           this.getList();
         });
       });
+    },
+    handleStopAndPlay(index,row){
+      this.source=this.host+row.urls;
+      this.$refs.myAudio.play()
     },
     handleUpdate(index, row) {
       this.dialogVisible = true;
@@ -162,7 +180,7 @@ export default {
         type: 'warning'
       }).then(() => {
         if (this.isEdit) {
-          updateAdmin(this.algorithm.id, this.algorithm).then(response => {
+          updateAction(this.algorithm.id, this.algorithm).then(response => {
             this.$message({
               message: '修改成功！',
               type: 'success'
@@ -171,7 +189,7 @@ export default {
             this.getList();
           })
         } else {
-          createAdmin(this.algorithm).then(response => {
+          create(this.algorithm).then(response => {
             this.$message({
               message: '添加成功！',
               type: 'success'

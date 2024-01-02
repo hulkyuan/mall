@@ -2,35 +2,36 @@
   <div class="app-container">
     <el-card class="operate-container" shadow="never">
       <i class="el-icon-tickets"></i>
-      <span>数据列表</span>
+      <span>摄像头管理</span>
+      <audio ref="myAudio" autoplay controls :src="source"></audio>
       <el-button size="mini" type="primary" class="btn-add" @click="getList()" style="margin-left: 20px">刷新</el-button>
       <el-button size="mini" type="primary" class="btn-add" @click="handleAdd()" style="margin-left: 20px">添加</el-button>
     </el-card>
     <div class="table-container">
       <el-table ref="adminTable" :data="list" style="width: 100%;" v-loading="listLoading" border>
-        <el-table-column label="编号" width="100" align="center">
+        <el-table-column label="ID" width="100" align="center">
           <template slot-scope="scope">{{ scope.row.id }}</template>
         </el-table-column>
-        <el-table-column label="算法编号" align="center">
+        <el-table-column label="摄像头编号" align="center">
           <template slot-scope="scope">{{ scope.row.code }}</template>
         </el-table-column>
-        <el-table-column label="算法名称" align="center">
+        <el-table-column label="摄像头视频流地址" align="center">
+          <template slot-scope="scope">{{ scope.row.urls }}</template>
+        </el-table-column>
+        <el-table-column label="摄像头名称" align="center">
           <template slot-scope="scope">{{ scope.row.name }}</template>
         </el-table-column>
-        <el-table-column label="接入方式" align="center">
-            <template slot-scope="scope">{{ scope.row.useType }}</template>
-        </el-table-column>
-        <el-table-column label="接入参数" width="160" align="center">
-          <template slot-scope="scope">{{ scope.row.params }}</template>
-        </el-table-column>
-        <el-table-column label="布控上限" width="160" align="center">
-          <template slot-scope="scope">{{ scope.row.maxCount }}</template>
-        </el-table-column>
-        <el-table-column label="更新时间" width="160" align="center">
-          <template slot-scope="scope">{{ scope.row.updateTime | formatDateTime }}</template>
+        <el-table-column label="转发状态" width="160" align="center">
+          <template slot-scope="scope">
+            <span v-if="scope.row.activeStatus==0">未转发</span>
+            <span v-else-if="scope.row.activeStatus==1">转发中</span>
+          </template>
         </el-table-column>
         <el-table-column label="操作" width="150" align="center">
           <template slot-scope="scope">
+            <el-button size="mini" type="text" @click="handleStopAndPlay(scope.$index, scope.row)">
+              播放
+            </el-button>
             <el-button size="mini" type="text" @click="handleUpdate(scope.$index, scope.row)">
               编辑
             </el-button>
@@ -46,28 +47,31 @@
         :page-size="listQuery.pageSize" :page-sizes="[10, 15, 20]" :total="total">
       </el-pagination>
     </div>
-    <el-dialog :title="isEdit ? '编辑算法' : '添加算法'" :visible.sync="dialogVisible" width="40%">
-      <el-form :model="algorithm" ref="adminForm" label-width="150px" size="small">
-        <el-form-item label="算法编号:">
-          <el-input v-model="algorithm.code" style="width: 250px" clearable></el-input>
+    <el-dialog :title="isEdit ? '编辑摄像头' : '添加摄像头'" :visible.sync="dialogVisible" width="50%">
+      <el-form :model="algorithm" ref="adminForm" label-width="180px" size="small">
+        <el-form-item label="系统生成编号:">
+          <el-input v-model="algorithm.code" style="width: 100%" clearable></el-input>
         </el-form-item>
-        <el-form-item label="算法名称:">
-          <el-input v-model="algorithm.name" style="width: 250px" clearable></el-input>
+        <el-form-item label="ws-fmp4:">
+          <el-input v-model="algorithm.fmp4" style="width: 100%" clearable></el-input>
         </el-form-item>
-        <el-form-item label="请选择接入方式:">
-          <el-select v-model="algorithm.useType" placeholder="请选择">
-            <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
-            </el-option>
-          </el-select>
+        <el-form-item label="rtsp:">
+          <el-input v-model="algorithm.rtsp" style="width: 100%" clearable></el-input>
         </el-form-item>
-        <el-form-item label="布控上限:">
-          <el-input v-model="algorithm.maxCount" style="width: 250px" clearable></el-input>
+        <el-form-item label="flv:">
+          <el-input v-model="algorithm.flv" style="width: 100%" clearable></el-input>
         </el-form-item>
-        <el-form-item label="接入参数:">
-          <el-input v-model="algorithm.params" style="width: 250px" clearable></el-input>
+        <el-form-item label="hls:">
+          <el-input v-model="algorithm.hls" style="width:100%" clearable></el-input>
+        </el-form-item>
+        <el-form-item label="摄像头视频流地址(rtsp):">
+          <el-input v-model="algorithm.urls" style="width: 100%" clearable></el-input>
+        </el-form-item>
+        <el-form-item label="摄像头名称:">
+          <el-input v-model="algorithm.name" style="width: 100%" clearable></el-input>
         </el-form-item>
         <el-form-item label="备注:">
-          <el-input v-model="algorithm.description" type="textarea" :rows="5" style="width: 250px" clearable></el-input>
+          <el-input v-model="algorithm.description" type="textarea" :rows="2" style="width: 100%" clearable></el-input>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
@@ -81,13 +85,9 @@
 import {
   fetchList,
   create,
-  updateBehavior,
-  deleteBehavior,
-} from '@/api/algorithm';
-import {
-  formatDate
-} from '@/utils/date';
-
+  updateAction,
+  deleteAction,
+} from '@/api/camera';
 const defaultListQuery = {
   pageNum: 1,
   pageSize: 10,
@@ -96,16 +96,17 @@ const defaultListQuery = {
 const defaultAdmin = {
   id: null,
   code: null,
-  password: null,
-  name: null,
-  useType: null,
+  createTime: null,
   description: null,
-  status: 1
+  name: null,
+  updateTime: null,
+  urls: null
 };
 export default {
   name: 'adminList',
   data() {
     return {
+      myAudio:null,
       listQuery: Object.assign({}, defaultListQuery),
       list: null,
       total: null,
@@ -115,30 +116,18 @@ export default {
       isEdit: false,
       allocDialogVisible: false,
       options: [{
-        value: 'API',
-        label: 'API'
+        value: 0,
+        label: '未转发'
       }, {
-        value: 'SYSTEM',
-        label: 'SYSTEM'
-      },
-      {
-        value: 'LIBRARY',
-        label: 'LIBRARY'
+        value: 1,
+        label: '转发中'
       }],
     }
   },
   created() {
     this.getList();
   },
-  filters: {
-    formatDateTime(time) {
-      if (time == null || time === '') {
-        return 'N/A';
-      }
-      let date = new Date(time);
-      return formatDate(date, 'yyyy-MM-dd hh:mm')
-    }
-  },
+  
   methods: {
     handleSearchList() {
       this.listQuery.pageNum = 1;
@@ -159,12 +148,12 @@ export default {
       this.algorithm = Object.assign({}, defaultAdmin);
     },
     handleDelete(index, row) {
-      this.$confirm('是否要删除该算法?', '提示', {
+      this.$confirm('是否要删除该摄像头?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        deleteBehavior(row.id).then(response => {
+        deleteAction(row.id).then(response => {
           this.$message({
             type: 'success',
             message: '删除成功!'
@@ -172,6 +161,10 @@ export default {
           this.getList();
         });
       });
+    },
+    handleStopAndPlay(index,row){
+      this.source=this.host+row.urls;
+      this.$refs.myAudio.play()
     },
     handleUpdate(index, row) {
       this.dialogVisible = true;
@@ -185,7 +178,7 @@ export default {
         type: 'warning'
       }).then(() => {
         if (this.isEdit) {
-          updateBehavior(this.algorithm.id, this.algorithm).then(response => {
+          updateAction(this.algorithm.id, this.algorithm).then(response => {
             this.$message({
               message: '修改成功！',
               type: 'success'

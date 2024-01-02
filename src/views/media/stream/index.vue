@@ -2,35 +2,38 @@
   <div class="app-container">
     <el-card class="operate-container" shadow="never">
       <i class="el-icon-tickets"></i>
-      <span>数据列表</span>
+      <span>在线视频流</span>
       <el-button size="mini" type="primary" class="btn-add" @click="getList()" style="margin-left: 20px">刷新</el-button>
       <el-button size="mini" type="primary" class="btn-add" @click="handleAdd()" style="margin-left: 20px">添加</el-button>
     </el-card>
     <div class="table-container">
       <el-table ref="adminTable" :data="list" style="width: 100%;" v-loading="listLoading" border>
-        <el-table-column label="编号" width="100" align="center">
+        <el-table-column label="ID" width="50" align="center">
           <template slot-scope="scope">{{ scope.row.id }}</template>
         </el-table-column>
-        <el-table-column label="算法编号" align="center">
-          <template slot-scope="scope">{{ scope.row.code }}</template>
-        </el-table-column>
-        <el-table-column label="算法名称" align="center">
+        <el-table-column label="视频流名称" align="center">
           <template slot-scope="scope">{{ scope.row.name }}</template>
         </el-table-column>
-        <el-table-column label="接入方式" align="center">
-            <template slot-scope="scope">{{ scope.row.useType }}</template>
+        <el-table-column label="视频流来源" align="center">
+          <template slot-scope="scope">{{ scope.row.cameraId }}</template>
         </el-table-column>
-        <el-table-column label="接入参数" width="160" align="center">
-          <template slot-scope="scope">{{ scope.row.params }}</template>
+        <el-table-column label="在线人数" width="100" align="center">
+          <template slot-scope="scope">{{ scope.row.users }}</template>
         </el-table-column>
-        <el-table-column label="布控上限" width="160" align="center">
-          <template slot-scope="scope">{{ scope.row.maxCount }}</template>
+        <el-table-column label="入口宽带" width="100" align="center">
+          <template slot-scope="scope">{{ scope.row.netWidth }}</template>
         </el-table-column>
-        <el-table-column label="更新时间" width="160" align="center">
-          <template slot-scope="scope">{{ scope.row.updateTime | formatDateTime }}</template>
+        <el-table-column label="视频信息" width="160" align="center">
+          <template slot-scope="scope">{{ scope.row.video }}</template>
+        </el-table-column>
+        <el-table-column label="音频信息" width="160" align="center">
+          <template slot-scope="scope">{{ scope.row.audio }}</template>
         </el-table-column>
         <el-table-column label="操作" width="150" align="center">
           <template slot-scope="scope">
+            <el-button size="mini" type="text" @click="handleStopAndPlay(scope.$index, scope.row)">
+              播放
+            </el-button>
             <el-button size="mini" type="text" @click="handleUpdate(scope.$index, scope.row)">
               编辑
             </el-button>
@@ -46,28 +49,28 @@
         :page-size="listQuery.pageSize" :page-sizes="[10, 15, 20]" :total="total">
       </el-pagination>
     </div>
-    <el-dialog :title="isEdit ? '编辑算法' : '添加算法'" :visible.sync="dialogVisible" width="40%">
+    <el-dialog :title="isEdit ? '编辑视频流' : '添加视频流'" :visible.sync="dialogVisible" width="40%">
       <el-form :model="algorithm" ref="adminForm" label-width="150px" size="small">
-        <el-form-item label="算法编号:">
-          <el-input v-model="algorithm.code" style="width: 250px" clearable></el-input>
-        </el-form-item>
-        <el-form-item label="算法名称:">
+        <el-form-item label="视频流名称:">
           <el-input v-model="algorithm.name" style="width: 250px" clearable></el-input>
         </el-form-item>
-        <el-form-item label="请选择接入方式:">
-          <el-select v-model="algorithm.useType" placeholder="请选择">
-            <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
+        <el-form-item label="视频流来源:">
+          <el-select v-model="algorithm.cameraId" placeholder="请选择">
+            <el-option v-for="item in cameraList" :key="item.id" :label="item.name" :value="item.id">
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="布控上限:">
-          <el-input v-model="algorithm.maxCount" style="width: 250px" clearable></el-input>
+        <el-form-item label="在线人数:">
+          <el-input v-model="algorithm.users" style="width: 250px" clearable></el-input>
         </el-form-item>
-        <el-form-item label="接入参数:">
-          <el-input v-model="algorithm.params" style="width: 250px" clearable></el-input>
+        <el-form-item label="入口宽带:">
+          <el-input v-model="algorithm.netWidth" style="width: 250px" clearable></el-input>
         </el-form-item>
-        <el-form-item label="备注:">
-          <el-input v-model="algorithm.description" type="textarea" :rows="5" style="width: 250px" clearable></el-input>
+        <el-form-item label="视频信息:">
+          <el-input v-model="algorithm.video" style="width: 250px" clearable></el-input>
+        </el-form-item>
+        <el-form-item label="音频信息:">
+          <el-input v-model="algorithm.audio" style="width: 250px" clearable></el-input>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
@@ -81,13 +84,13 @@
 import {
   fetchList,
   create,
-  updateBehavior,
-  deleteBehavior,
-} from '@/api/algorithm';
+  updateAction,
+  deleteAction,
+  cameraList
+} from '@/api/stream';
 import {
   formatDate
 } from '@/utils/date';
-
 const defaultListQuery = {
   pageNum: 1,
   pageSize: 10,
@@ -96,35 +99,28 @@ const defaultListQuery = {
 const defaultAdmin = {
   id: null,
   code: null,
-  password: null,
-  name: null,
-  useType: null,
+  createTime: null,
   description: null,
-  status: 1
+  name: null,
+  updateTime: null,
+  urls: null
 };
 export default {
-  name: 'adminList',
+  name: 'stream',
   data() {
     return {
+      myAudio: null,
       listQuery: Object.assign({}, defaultListQuery),
       list: null,
+      cameraList: [],
       total: null,
       listLoading: false,
       dialogVisible: false,
       algorithm: Object.assign({}, defaultAdmin),
       isEdit: false,
       allocDialogVisible: false,
-      options: [{
-        value: 'API',
-        label: 'API'
-      }, {
-        value: 'SYSTEM',
-        label: 'SYSTEM'
-      },
-      {
-        value: 'LIBRARY',
-        label: 'LIBRARY'
-      }],
+      source: null,
+      host: 'http://111.229.115.233:8086'
     }
   },
   created() {
@@ -140,6 +136,12 @@ export default {
     }
   },
   methods: {
+    onMediaChange(file) {
+
+      this.algorithm.urls = file.url;
+
+      // this.algorithm.name = file.name;
+    },
     handleSearchList() {
       this.listQuery.pageNum = 1;
       this.getList();
@@ -157,14 +159,17 @@ export default {
       this.dialogVisible = true;
       this.isEdit = false;
       this.algorithm = Object.assign({}, defaultAdmin);
+      cameraList().then(response => {
+        this.cameraList = response.data;
+      })
     },
     handleDelete(index, row) {
-      this.$confirm('是否要删除该算法?', '提示', {
+      this.$confirm('是否要删除该视频流?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        deleteBehavior(row.id).then(response => {
+        deleteAction(row.id).then(response => {
           this.$message({
             type: 'success',
             message: '删除成功!'
@@ -173,8 +178,15 @@ export default {
         });
       });
     },
+    handleStopAndPlay(index, row) {
+      this.source = this.host + row.urls;
+      this.$refs.myAudio.play()
+    },
     handleUpdate(index, row) {
       this.dialogVisible = true;
+      cameraList().then(response => {
+        this.cameraList = response.data;
+      })
       this.isEdit = true;
       this.algorithm = Object.assign({}, row);
     },
@@ -185,7 +197,7 @@ export default {
         type: 'warning'
       }).then(() => {
         if (this.isEdit) {
-          updateBehavior(this.algorithm.id, this.algorithm).then(response => {
+          updateAction(this.algorithm.id, this.algorithm).then(response => {
             this.$message({
               message: '修改成功！',
               type: 'success'

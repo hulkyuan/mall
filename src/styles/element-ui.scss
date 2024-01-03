@@ -10,12 +10,12 @@
 }
 
 //暂时性解决diolag 问题 https://github.com/ElemeFE/element/issues/2461
-.el-dialog {
-  transform: none;
-  left: 0;
-  position: relative;
-  margin: 0 auto;
-}
+// .el-dialog {
+//   transform: none;
+//   left: 0;
+//   position: relative;
+//   margin: 0 auto;
+// }
 
 //element ui upload
 .upload-container {
@@ -103,12 +103,12 @@
 }
 
 .el-dialog {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  margin-top: 0 !important;
-  margin: 0;
+  // position: absolute;
+  // left: 50%;
+  // top: 50%;
+  // transform: translate(-50%, -50%);
+  // margin-top: 0 !important;
+  // margin: 0;
   .app-container{
     box-shadow: none;
     border: 0;

@@ -667,6 +667,27 @@ export const asyncRouterMap = [{
   ]
 },
 {
+  path: '/core',
+  component: Layout,
+  redirect: '/core/index',
+  name: 'core',
+  hidden: true,
+  meta: {
+    title: '布控管理',
+    icon: 'ums'
+  },
+  children: [{
+    path: 'coreindex',
+    name: 'coreindex',
+    component: () => import('@/views/core/index'),
+    meta: {
+      title: '布控管理',
+      icon: 'core-index'
+    }
+  }
+  ]
+},
+{
   path: '*',
   redirect: '/404',
   hidden: true

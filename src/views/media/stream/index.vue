@@ -55,7 +55,7 @@
           <el-input v-model="algorithm.name" style="width: 250px" clearable></el-input>
         </el-form-item>
         <el-form-item label="视频流来源:">
-          <el-select v-model="algorithm.cameraId" placeholder="请选择">
+          <el-select v-model="algorithm.cameraId" @change="onCameraChange" placeholder="请选择">
             <el-option v-for="item in cameraList" :key="item.id" :label="item.name" :value="item.id">
             </el-option>
           </el-select>
@@ -137,10 +137,7 @@ export default {
   },
   methods: {
     onMediaChange(file) {
-
       this.algorithm.urls = file.url;
-
-      // this.algorithm.name = file.name;
     },
     handleSearchList() {
       this.listQuery.pageNum = 1;
@@ -162,6 +159,10 @@ export default {
       cameraList().then(response => {
         this.cameraList = response.data;
       })
+    },
+    onCameraChange(value) {
+      const found = this.cameraList.find(item => item.id === value);
+      this.algorithm.cameraName = found.name;
     },
     handleDelete(index, row) {
       this.$confirm('是否要删除该视频流?', '提示', {

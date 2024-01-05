@@ -4,31 +4,39 @@
       <i class="el-icon-tickets"></i>
       <span>摄像头管理</span>
       <audio ref="myAudio" autoplay controls :src="source"></audio>
+      <el-button size="mini" type="primary" class="btn-add" @click="setAllActive()"
+        style="margin-left: 20px">全部转发</el-button>
+      <file-upload class="btn-add" @mediaChange="onMediaChange"
+        style="margin-left: 20px"></file-upload>
       <el-button size="mini" type="primary" class="btn-add" @click="getList()" style="margin-left: 20px">刷新</el-button>
       <el-button size="mini" type="primary" class="btn-add" @click="handleAdd()" style="margin-left: 20px">添加</el-button>
     </el-card>
     <div class="table-container">
       <el-table ref="adminTable" :data="list" style="width: 100%;" v-loading="listLoading" border>
-        <el-table-column label="ID" width="100" align="center">
+        <!-- <el-table-column label="ID" width="100" align="center">
           <template slot-scope="scope">{{ scope.row.id }}</template>
-        </el-table-column>
-        <el-table-column label="摄像头编号" align="center">
+        </el-table-column> -->
+        <el-table-column label="摄像头编号" width="120" align="center">
           <template slot-scope="scope">{{ scope.row.code }}</template>
         </el-table-column>
         <el-table-column label="摄像头视频流地址" align="center">
           <template slot-scope="scope">{{ scope.row.urls }}</template>
         </el-table-column>
-        <el-table-column label="摄像头名称" align="center">
+        <el-table-column label="摄像头名称" width="120" align="center">
           <template slot-scope="scope">{{ scope.row.name }}</template>
         </el-table-column>
-        <el-table-column label="转发状态" width="160" align="center">
+        <el-table-column label="转发状态" width="120" align="center">
           <template slot-scope="scope">
-            <span v-if="scope.row.activeStatus==0">未转发</span>
-            <span v-else-if="scope.row.activeStatus==1">转发中</span>
+            <span v-if="scope.row.activeStatus == 0">未转发</span>
+            <span v-else-if="scope.row.activeStatus == 1">转发中</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" align="center">
+        <el-table-column label="操作" width="200" align="center">
           <template slot-scope="scope">
+            <el-button size="mini" type="text" @click="handleStatus(scope.$index, scope.row)">
+              <span v-if="scope.row.activeStatus == 0">开启</span>
+              <span v-if="scope.row.activeStatus == 1">停止</span>
+            </el-button>
             <el-button size="mini" type="text" @click="handleStopAndPlay(scope.$index, scope.row)">
               播放
             </el-button>
@@ -87,7 +95,11 @@ import {
   create,
   updateAction,
   deleteAction,
+  setAllActiveAction,
+  setActiveAction,
+  batchAdd
 } from '@/api/camera';
+import FileUpload from '@/components/Upload/fileUpload'
 const defaultListQuery = {
   pageNum: 1,
   pageSize: 10,
@@ -104,9 +116,12 @@ const defaultAdmin = {
 };
 export default {
   name: 'adminList',
+  components: {
+    FileUpload,
+  },
   data() {
     return {
-      myAudio:null,
+      myAudio: null,
       listQuery: Object.assign({}, defaultListQuery),
       list: null,
       total: null,
@@ -115,6 +130,7 @@ export default {
       algorithm: Object.assign({}, defaultAdmin),
       isEdit: false,
       allocDialogVisible: false,
+      source: '',
       options: [{
         value: 0,
         label: '未转发'
@@ -127,8 +143,37 @@ export default {
   created() {
     this.getList();
   },
-  
+
   methods: {
+    onMediaChange(msg) {
+      if (msg == 'success') {
+        this.getList();
+      }
+    },
+    setAllActive() {
+      setAllActiveAction(1).then(response => {
+        this.$message({
+          type: 'success',
+          message: '操作成功!'
+        });
+        this.getList();
+      })
+    },
+    handleStatus(index, row) {
+      let status;
+      if (row.activeStatus == 1) {
+        status = 0
+      } else {
+        status = 1;
+      }
+      setActiveAction(row.id, status).then(response => {
+        this.$message({
+          type: 'success',
+          message: '操作成功!'
+        });
+        this.getList();
+      })
+    },
     handleSearchList() {
       this.listQuery.pageNum = 1;
       this.getList();
@@ -147,6 +192,9 @@ export default {
       this.isEdit = false;
       this.algorithm = Object.assign({}, defaultAdmin);
     },
+    handleBatchAdd() {
+
+    },
     handleDelete(index, row) {
       this.$confirm('是否要删除该摄像头?', '提示', {
         confirmButtonText: '确定',
@@ -162,8 +210,8 @@ export default {
         });
       });
     },
-    handleStopAndPlay(index,row){
-      this.source=this.host+row.urls;
+    handleStopAndPlay(index, row) {
+      this.source = this.host + row.urls;
       this.$refs.myAudio.play()
     },
     handleUpdate(index, row) {

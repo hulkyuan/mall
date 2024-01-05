@@ -8,14 +8,14 @@
     </el-card>
     <div class="table-container">
       <el-table ref="adminTable" :data="list" style="width: 100%;" v-loading="listLoading" border>
-        <el-table-column label="ID" width="50" align="center">
+        <!-- <el-table-column label="ID" width="50" align="center">
           <template slot-scope="scope">{{ scope.row.id }}</template>
-        </el-table-column>
+        </el-table-column> -->
         <el-table-column label="视频流名称" align="center">
           <template slot-scope="scope">{{ scope.row.name }}</template>
         </el-table-column>
         <el-table-column label="视频流来源" align="center">
-          <template slot-scope="scope">{{ scope.row.cameraId }}</template>
+          <template slot-scope="scope">{{ scope.row.cameraName }}</template>
         </el-table-column>
         <el-table-column label="在线人数" width="100" align="center">
           <template slot-scope="scope">{{ scope.row.users }}</template>

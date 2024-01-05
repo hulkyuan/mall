@@ -4,7 +4,7 @@ import request from '@/utils/request'
 
 export function getInfo(id) {
   return request({
-    url: '/camera/detail/'+id,
+    url: '/camera/detail/' + id,
     method: 'get',
   })
 }
@@ -33,10 +33,29 @@ export function updateAction(id, data) {
     data: data
   })
 }
+export function batchAdd( data) {
+  return request({
+    url: '/camera/batchAdd',
+    method: 'post',
+    data: data
+  })
+}
 
 export function deleteAction(id) {
   return request({
     url: '/camera/delete/' + id,
+    method: 'get'
+  })
+}
+export function setActiveAction(id, status) {
+  return request({
+    url: '/camera/active/' + id + '?status=' + status,
+    method: 'get'
+  })
+}
+export function setAllActiveAction(status) {
+  return request({
+    url: '/camera/batchActive?status=' + status,
     method: 'get'
   })
 }

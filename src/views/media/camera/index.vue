@@ -3,7 +3,6 @@
     <el-card class="operate-container" shadow="never">
       <i class="el-icon-tickets"></i>
       <span>摄像头管理</span>
-      <audio ref="myAudio" autoplay controls :src="source"></audio>
       <el-button size="mini" type="primary" class="btn-add" @click="setAllActive()"
         style="margin-left: 20px">全部转发</el-button>
       <file-upload class="btn-add" @mediaChange="onMediaChange"
@@ -38,7 +37,7 @@
               <span v-if="scope.row.activeStatus == 1">停止</span>
             </el-button>
             <el-button size="mini" type="text" @click="handleStopAndPlay(scope.$index, scope.row)">
-              播放
+              视频查看
             </el-button>
             <el-button size="mini" type="text" @click="handleUpdate(scope.$index, scope.row)">
               编辑
@@ -87,6 +86,12 @@
         <el-button type="primary" @click="handleDialogConfirm()" size="small">确 定</el-button>
       </span>
     </el-dialog>
+    <el-dialog :title="'视频'" :visible.sync="dialogVideoVisible" width="50%" @closed="onDialogClose">
+      <video ref="myAudio" controls :src="source" width="100%"></video>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogVideoVisible = false" size="small">关 闭</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 <script>
@@ -97,7 +102,6 @@ import {
   deleteAction,
   setAllActiveAction,
   setActiveAction,
-  batchAdd
 } from '@/api/camera';
 import FileUpload from '@/components/Upload/fileUpload'
 const defaultListQuery = {
@@ -127,6 +131,7 @@ export default {
       total: null,
       listLoading: false,
       dialogVisible: false,
+      dialogVideoVisible:false,
       algorithm: Object.assign({}, defaultAdmin),
       isEdit: false,
       allocDialogVisible: false,
@@ -174,6 +179,13 @@ export default {
         this.getList();
       })
     },
+    onDialogClose(){
+      if(!this.$refs.myAudio.paused){
+        this.$refs.myAudio.pause();
+        this.source=''
+      }
+     
+    },
     handleSearchList() {
       this.listQuery.pageNum = 1;
       this.getList();
@@ -211,8 +223,9 @@ export default {
       });
     },
     handleStopAndPlay(index, row) {
-      this.source = this.host + row.urls;
-      this.$refs.myAudio.play()
+      this.dialogVideoVisible = true;
+      this.source='https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
+      this.algorithm = Object.assign({}, row);
     },
     handleUpdate(index, row) {
       this.dialogVisible = true;

@@ -17,13 +17,13 @@
                     <template slot-scope="scope">{{ scope.row.code }}</template>
                 </el-table-column>
                 <el-table-column label="视频流" align="center">
-                    <template slot-scope="scope">{{ scope.row.videoId }}</template>
+                    <template slot-scope="scope">{{ scope.row.videoName }}</template>
                 </el-table-column>
                 <el-table-column label="算法处理实时流" width="160" align="center">
                     <template slot-scope="scope">{{ scope.row.users }}</template>
                 </el-table-column>
                 <el-table-column label="算法" width="100" align="center">
-                    <template slot-scope="scope">{{ scope.row.baseId + '' + scope.row.actionId }}</template>
+                    <template slot-scope="scope">{{ scope.row.baseName + '' + scope.row.actionName }}</template>
                 </el-table-column>
                 <el-table-column label="计算频率" width="120" align="center">
                     <template slot-scope="scope">{{ scope.row.multiRate }}</template>

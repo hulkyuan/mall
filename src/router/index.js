@@ -628,6 +628,27 @@ export const asyncRouterMap = [{
   ]
 },
 {
+  path: '/warning',
+  component: Layout,
+  redirect: '/warning/index',
+  name: 'warning',
+  hidden: true,
+  meta: {
+    title: '警告视频管理',
+    icon: 'ums'
+  },
+  children: [{
+    path: 'warningindex',
+    name: 'warningindex',
+    component: () => import('@/views/warning/index'),
+    meta: {
+      title: '警告视频管理',
+      icon: 'warning-index'
+    }
+  }
+  ]
+},
+{
   path: '/media',
   component: Layout,
   redirect: '/media/stream',

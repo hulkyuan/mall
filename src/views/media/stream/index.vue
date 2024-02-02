@@ -34,11 +34,11 @@
             <el-button size="mini" type="text" @click="handleStopAndPlay(scope.$index, scope.row)">
               播放
             </el-button>
-            <el-button size="mini" type="text" @click="handleUpdate(scope.$index, scope.row)">
+            <!-- <el-button size="mini" type="text" @click="handleUpdate(scope.$index, scope.row)">
               编辑
             </el-button>
             <el-button size="mini" type="text" @click="handleDelete(scope.$index, scope.row)">删除
-            </el-button>
+            </el-button> -->
           </template>
         </el-table-column>
       </el-table>
@@ -76,6 +76,14 @@
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogVisible = false" size="small">取 消</el-button>
         <el-button type="primary" @click="handleDialogConfirm()" size="small">确 定</el-button>
+      </span>
+    </el-dialog>
+    <el-dialog :title="'视频'" :visible.sync="dialogVideoVisible" width="50%" @closed="onDialogClose">
+      <video id="videoElement" ref="myAudio" controls :src="source" width="100%"></video>
+      <button id="play" type="button" @click="playVideo()" class="btn btn-default btn-sm"><i class="fa fa-play"></i> 播放视频 </button>
+      <button id="stop" type="button" @click="stopVideo()" class="btn btn-default btn-sm"><i class="fa fa-stop"></i> 停止播放 </button>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogVideoVisible = false" size="small">关 闭</el-button>
       </span>
     </el-dialog>
   </div>
@@ -116,6 +124,8 @@ export default {
       total: null,
       listLoading: false,
       dialogVisible: false,
+      dialogVideoVisible: false,
+      flvPlayer:null,
       algorithm: Object.assign({}, defaultAdmin),
       isEdit: false,
       allocDialogVisible: false,
@@ -136,6 +146,46 @@ export default {
     }
   },
   methods: {
+    onDialogClose() {
+      if (!this.$refs.myAudio.paused) {
+        this.$refs.myAudio.pause();
+        this.source = ''
+      }
+
+    },
+    stopVideo(){
+      if (typeof this.flvPlayer === "undefined" || this.flvPlayer === null) {
+            myAlert("播放器暂未启动！","error");
+            return;
+        }
+        this.flvPlayer.pause();
+        this.flvPlayer.unload();
+        this.flvPlayer.detachMediaElement();
+        this.flvPlayer.destroy();
+        this.flvPlayer = null;
+    },
+    playVideo(){
+      const row=this.algorithm;
+      if (flvjs.isSupported()) {
+        var videoElement = document.getElementById('videoElement');
+        this.flvPlayer = flvjs.createPlayer({
+          type: 'flv',
+          url: row.videoHttp,
+          enableStashBuffer: true,
+          isLive: true,
+          withCredentials: false,
+          hasAudio: true,
+          hasVideo: true,
+        }, {
+          enableWorker: false,
+          lazyLoadMaxDuration: 3 * 60,
+          seekType: 'range',
+        });
+        this.flvPlayer.attachMediaElement(videoElement);
+        this.flvPlayer.load();
+        this.flvPlayer.play();
+      }
+    },
     onMediaChange(file) {
       this.algorithm.urls = file.url;
     },
@@ -180,8 +230,9 @@ export default {
       });
     },
     handleStopAndPlay(index, row) {
-      this.source = this.host + row.urls;
-      this.$refs.myAudio.play()
+      this.dialogVideoVisible = true;
+      
+      this.algorithm = Object.assign({}, row);
     },
     handleUpdate(index, row) {
       this.dialogVisible = true;
@@ -198,6 +249,7 @@ export default {
         type: 'warning'
       }).then(() => {
         if (this.isEdit) {
+          console.log(this.algorithm)
           updateAction(this.algorithm.id, this.algorithm).then(response => {
             this.$message({
               message: '修改成功！',

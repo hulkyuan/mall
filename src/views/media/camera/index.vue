@@ -5,8 +5,7 @@
       <span>摄像头管理</span>
       <el-button size="mini" type="primary" class="btn-add" @click="setAllActive()"
         style="margin-left: 20px">全部转发</el-button>
-      <file-upload class="btn-add" @mediaChange="onMediaChange"
-        style="margin-left: 20px"></file-upload>
+      <file-upload class="btn-add" @mediaChange="onMediaChange" style="margin-left: 20px"></file-upload>
       <el-button size="mini" type="primary" class="btn-add" @click="getList()" style="margin-left: 20px">刷新</el-button>
       <el-button size="mini" type="primary" class="btn-add" @click="handleAdd()" style="margin-left: 20px">添加</el-button>
     </el-card>
@@ -87,7 +86,10 @@
       </span>
     </el-dialog>
     <el-dialog :title="'视频'" :visible.sync="dialogVideoVisible" width="50%" @closed="onDialogClose">
-      <video ref="myAudio" controls :src="source" width="100%"></video>
+      
+      <video id="videoElement" ref="myAudio" controls :src="source" width="100%"></video>
+      <button id="play" type="button" @click="playVideo()" class="btn btn-default btn-sm"><i class="fa fa-play"></i> 播放视频 </button>
+      <button id="stop" type="button" @click="stopVideo()" class="btn btn-default btn-sm"><i class="fa fa-stop"></i> 停止播放 </button>
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogVideoVisible = false" size="small">关 闭</el-button>
       </span>
@@ -104,6 +106,7 @@ import {
   setActiveAction,
 } from '@/api/camera';
 import FileUpload from '@/components/Upload/fileUpload'
+// import flvjs from '@/utils/flv.min.js'
 const defaultListQuery = {
   pageNum: 1,
   pageSize: 10,
@@ -129,9 +132,10 @@ export default {
       listQuery: Object.assign({}, defaultListQuery),
       list: null,
       total: null,
+      flvPlayer:null,
       listLoading: false,
       dialogVisible: false,
-      dialogVideoVisible:false,
+      dialogVideoVisible: false,
       algorithm: Object.assign({}, defaultAdmin),
       isEdit: false,
       allocDialogVisible: false,
@@ -179,12 +183,12 @@ export default {
         this.getList();
       })
     },
-    onDialogClose(){
-      if(!this.$refs.myAudio.paused){
+    onDialogClose() {
+      if (!this.$refs.myAudio.paused) {
         this.$refs.myAudio.pause();
-        this.source=''
+        this.source = ''
       }
-     
+
     },
     handleSearchList() {
       this.listQuery.pageNum = 1;
@@ -222,9 +226,45 @@ export default {
         });
       });
     },
+    stopVideo(){
+      if (typeof this.flvPlayer === "undefined" || this.flvPlayer === null) {
+            myAlert("播放器暂未启动！","error");
+            return;
+        }
+        this.flvPlayer.pause();
+        this.flvPlayer.unload();
+        this.flvPlayer.detachMediaElement();
+        this.flvPlayer.destroy();
+        this.flvPlayer = null;
+    },
+    playVideo(){
+      const row=this.algorithm;
+      if (flvjs.isSupported()) {
+        var videoElement = document.getElementById('videoElement');
+        this.flvPlayer = flvjs.createPlayer({
+          type: 'flv',
+          url: row.flv,
+          enableStashBuffer: true,
+          isLive: true,
+          withCredentials: false,
+          hasAudio: true,
+          hasVideo: true,
+        }, {
+          enableWorker: false,
+          lazyLoadMaxDuration: 3 * 60,
+          seekType: 'range',
+        });
+        this.flvPlayer.attachMediaElement(videoElement);
+        this.flvPlayer.load();
+        this.flvPlayer.play();
+      }
+    },
     handleStopAndPlay(index, row) {
       this.dialogVideoVisible = true;
-      this.source='https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
+      // console.log(row)
+      // const url=URL.createObjectURL('http://118.25.186.197:9554/live/TestStream1.live.flv')
+      // this.source=row.flv;
+      
       this.algorithm = Object.assign({}, row);
     },
     handleUpdate(index, row) {

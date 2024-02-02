@@ -6,7 +6,7 @@
       <el-button size="mini" type="primary" class="btn-add" @click="getList()" style="margin-left: 20px">刷新</el-button>
     </el-card>
     <div class="table-container">
-      <el-table ref="adminTable" :data="list" style="width: 100%;" v-loading="listLoading" border>
+      <el-table :data="list" style="width: 100%;" v-loading="listLoading" border>
         <el-table-column label="ID" width="100" align="center">
           <template slot-scope="scope">{{ scope.row.id }}</template>
         </el-table-column>
@@ -39,9 +39,7 @@
       </el-pagination>
     </div>
     <el-dialog :title="'视频'" :visible.sync="dialogVideoVisible" width="50%" @closed="onDialogClose">
-      <video id="videoElement" ref="myAudio" controls :src="source" width="100%"></video>
-      <button id="play" type="button" @click="playVideo()" class="btn btn-default btn-sm"><i class="fa fa-play"></i> 播放视频 </button>
-      <button id="stop" type="button" @click="stopVideo()" class="btn btn-default btn-sm"><i class="fa fa-stop"></i> 停止播放 </button>
+      <video ref="myAudio" controls :src="source" width="100%"></video>
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogVideoVisible = false" size="small">关 闭</el-button>
       </span>
@@ -106,39 +104,6 @@ export default {
       }
 
     },
-    stopVideo(){
-      if (typeof this.flvPlayer === "undefined" || this.flvPlayer === null) {
-            myAlert("播放器暂未启动！","error");
-            return;
-        }
-        this.flvPlayer.pause();
-        this.flvPlayer.unload();
-        this.flvPlayer.detachMediaElement();
-        this.flvPlayer.destroy();
-        this.flvPlayer = null;
-    },
-    playVideo(){
-      const row=this.algorithm;
-      if (flvjs.isSupported()) {
-        var videoElement = document.getElementById('videoElement');
-        this.flvPlayer = flvjs.createPlayer({
-          type: 'flv',
-          url: row.videoUrl,
-          enableStashBuffer: true,
-          isLive: true,
-          withCredentials: false,
-          hasAudio: true,
-          hasVideo: true,
-        }, {
-          enableWorker: false,
-          lazyLoadMaxDuration: 3 * 60,
-          seekType: 'range',
-        });
-        this.flvPlayer.attachMediaElement(videoElement);
-        this.flvPlayer.load();
-        this.flvPlayer.play();
-      }
-    },
     handleSearchList() {
       this.listQuery.pageNum = 1;
       this.getList();
@@ -169,7 +134,7 @@ export default {
     },
     handleStopAndPlay(index,row){
       this.dialogVideoVisible = true;
-      
+      this.source=row.videoUrl;
       this.algorithm = Object.assign({}, row);
     },
     handleUpdate(index, row) {
